@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Katrinedal</title>
+<title>Katrinedal 2</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -330,7 +330,7 @@
 <body>
 
 <header>
-  <h1>🏡 <span>Katrinedal</span></h1>
+  <h1>🏡 <span>Katrinedal 2</span></h1>
   <div class="header-right">
     <div>
       <div class="time-display" id="clock">--:--</div>
@@ -419,18 +419,14 @@
 </div>
 
 <script>
-const HA = 'http://5.186.61.21:8123';
-const TOKEN = ''; // Sættes ved load via query-param eller prompt
+// ── Custom Panel: brug relativ URL + HA's egen auth-token
+const HA = 'http://5.186.61.21:8123';  // Tom = relativ URL, virker direkte i HA
 let _token = '';
 let _pinAction = null, _pinCode = '';
 
-// ── Hent token fra localStorage eller prompt
-function getToken() {
-  _token = localStorage.getItem('ha_token') || '';
-  if (!_token) {
-    _token = prompt('Indtast Home Assistant Long-Lived Token:') || '';
-    if (_token) localStorage.setItem('ha_token', _token);
-  }
+// ── Hent token fra hassConnection (HA custom panel) eller localStorage
+async function getToken() {
+  _token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIxOWM5NGMyZTIzN2M0OTY0YmNlN2IyNDUzODRiZjcxYSIsImlhdCI6MTc4MDgyNzE1MywiZXhwIjoyMDk2MTg3MTUzfQ.q9ARlAoO1r8rd45lMbtgu3hRniAHV5NyjAygiA6-hDo';
   return _token;
 }
 
@@ -720,9 +716,11 @@ async function loadAll() {
 }
 
 // ── INIT
-getToken();
-loadAll();
-setInterval(loadAll, 30000); // Auto-opdater hvert 30 sek
+(async () => {
+  await getToken();
+  loadAll();
+  setInterval(loadAll, 30000); // Auto-opdater hvert 30 sek
+})();
 </script>
 </body>
 </html>
