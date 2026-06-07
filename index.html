@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Katrinedal</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --card2: #22263a;
+    --border: rgba(255,255,255,0.07);
+    --accent: #4f8ef7;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --purple: #a78bfa;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --on: #fbbf24;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: .5px; }
+  header h1 span { color: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 14px; }
+  .time-display { font-size: 1.1rem; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .refresh-btn {
+    background: rgba(79,142,247,0.15);
+    border: 1px solid rgba(79,142,247,0.3);
+    color: var(--accent);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: .82rem;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .refresh-btn:hover { background: rgba(79,142,247,0.28); }
+  .last-update { font-size: .72rem; color: var(--muted); }
+
+  /* GRID */
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    transition: border-color .2s;
+  }
+  .card:hover { border-color: rgba(255,255,255,0.14); }
+  .card.wide { grid-column: span 2; }
+  .card-title {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .card-title .icon { font-size: 1rem; }
+
+  /* STATUS SECTION */
+  .status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .status-item {
+    background: var(--card2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .status-label { font-size: .68rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .8px; }
+  .status-value { font-size: 1.3rem; font-weight: 700; }
+  .status-unit { font-size: .72rem; color: var(--muted); }
+
+  /* GARAGE */
+  .garage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .garage-port {
+    background: var(--card2);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: transform .15s, background .2s;
+    border: 2px solid transparent;
+    user-select: none;
+  }
+  .garage-port:hover { transform: translateY(-2px); }
+  .garage-port.open { border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.08); }
+  .garage-port.closed { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.06); }
+  .garage-icon { font-size: 2.8rem; line-height: 1; }
+  .garage-name { font-size: .78rem; font-weight: 600; color: var(--muted); }
+  .garage-state { font-size: 1rem; font-weight: 700; }
+  .garage-port.open .garage-state { color: var(--red); }
+  .garage-port.closed .garage-state { color: var(--green); }
+  .garage-btn {
+    background: rgba(79,142,247,0.18);
+    border: 1px solid rgba(79,142,247,0.35);
+    color: var(--accent);
+    border-radius: 8px;
+    padding: 5px 14px;
+    font-size: .75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+    width: 100%;
+  }
+  .garage-btn:hover { background: rgba(79,142,247,0.32); }
+
+  /* LIGHTS */
+  .lights-list { display: flex; flex-direction: column; gap: 6px; }
+  .light-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--card2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .light-name { font-size: .83rem; font-weight: 500; flex: 1; }
+  .toggle-btn {
+    position: relative;
+    width: 42px;
+    height: 24px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: background .25s;
+    flex-shrink: 0;
+    background: #374151;
+  }
+  .toggle-btn.on { background: var(--on); }
+  .toggle-btn::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    transition: transform .25s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.4);
+  }
+  .toggle-btn.on::after { transform: translateX(18px); }
+  .light-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+  /* ALARM */
+  .alarm-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .alarm-state {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .alarm-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 10px var(--green);
+    flex-shrink: 0;
+  }
+  .alarm-dot.armed { background: var(--red); box-shadow: 0 0 10px var(--red); }
+  .alarm-dot.pending { background: var(--yellow); box-shadow: 0 0 10px var(--yellow); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .alarm-name { font-size: .95rem; font-weight: 600; }
+  .alarm-status { font-size: .78rem; color: var(--muted); }
+  .alarm-btns { display: flex; gap: 8px; margin-top: 12px; }
+  .alarm-btn {
+    flex: 1;
+    padding: 9px;
+    border-radius: 8px;
+    border: none;
+    font-size: .78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  .alarm-btn:hover { opacity: .85; }
+  .alarm-btn.disarm { background: var(--green); color: #000; }
+  .alarm-btn.arm-home { background: var(--yellow); color: #000; }
+  .alarm-btn.arm-away { background: var(--red); color: #fff; }
+
+  /* TEMP */
+  .temp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .temp-item {
+    background: var(--card2);
+    border-radius: 10px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+  .temp-val { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+  .temp-name { font-size: .65rem; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: .6px; }
+
+  /* AFFALDSKALENDER */
+  .affald-list { display: flex; flex-direction: column; gap: 8px; }
+  .affald-row {
+    background: var(--card2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .affald-name { font-size: .82rem; }
+  .affald-days {
+    font-size: .78rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(79,142,247,0.15);
+    color: var(--accent);
+  }
+  .affald-days.soon { background: rgba(245,158,11,0.2); color: var(--yellow); }
+  .affald-days.urgent { background: rgba(239,68,68,0.2); color: var(--red); }
+
+  /* LOADING */
+  .loading { color: var(--muted); font-size: .82rem; text-align: center; padding: 20px; }
+  .error-msg { color: var(--red); font-size: .78rem; padding: 8px 12px; background: rgba(239,68,68,0.1); border-radius: 8px; margin-top: 8px; }
+
+  /* KAMERA STATUS */
+  .cam-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .cam-item {
+    background: var(--card2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .cam-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+  .cam-dot.motion { background: var(--red); animation: pulse 1s infinite; }
+  .cam-name { font-size: .78rem; }
+
+  /* PIN MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.7);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    min-width: 280px;
+    text-align: center;
+  }
+  .modal h3 { margin-bottom: 16px; font-size: 1.1rem; }
+  .pin-display {
+    font-size: 2rem;
+    letter-spacing: 8px;
+    margin-bottom: 16px;
+    min-height: 2.5rem;
+    color: var(--accent);
+  }
+  .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .pin-btn {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .pin-btn:hover { background: rgba(79,142,247,0.2); }
+  .pin-cancel { background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 8px 20px; cursor: pointer; font-size: .85rem; }
+
+  @media (max-width: 600px) {
+    main { grid-template-columns: 1fr; }
+    .card.wide { grid-column: span 1; }
+    .temp-grid { grid-template-columns: repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏡 <span>Katrinedal</span></h1>
+  <div class="header-right">
+    <div>
+      <div class="time-display" id="clock">--:--</div>
+      <div class="last-update" id="lastUpdate">Opdaterer...</div>
+    </div>
+    <button class="refresh-btn" onclick="loadAll()">↻ Opdater</button>
+    <button class="refresh-btn" style="background:#c0392b;" onclick="localStorage.removeItem('ha_token');location.reload();" title="Log af og skift token">🔒 Log af</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- GARAGEPORTE -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🚗</span> Garageporte</div>
+    <div class="garage-grid" id="garageGrid">
+      <div class="loading">Henter...</div>
+    </div>
+  </div>
+
+  <!-- ALARM -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🔒</span> Alarm</div>
+    <div id="alarmSection"><div class="loading">Henter...</div></div>
+  </div>
+
+  <!-- TEMPERATURER -->
+  <div class="card wide">
+    <div class="card-title"><span class="icon">🌡️</span> Temperaturer</div>
+    <div class="temp-grid" id="tempGrid">
+      <div class="loading">Henter...</div>
+    </div>
+  </div>
+
+  <!-- LYS INDENDØRS -->
+  <div class="card">
+    <div class="card-title"><span class="icon">💡</span> Lys — Indendørs</div>
+    <div class="lights-list" id="lightsIndoor"></div>
+  </div>
+
+  <!-- LYS UDENDØRS -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🌙</span> Lys — Udendørs</div>
+    <div class="lights-list" id="lightsOutdoor"></div>
+  </div>
+
+  <!-- AFFALDSKALENDER -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🗑️</span> Affaldskalender</div>
+    <div class="affald-list" id="affaldList">
+      <div class="loading">Henter...</div>
+    </div>
+  </div>
+
+  <!-- KAMERA BEVÆGELSE -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📹</span> Kameraer — Bevægelse</div>
+    <div class="cam-grid" id="camGrid">
+      <div class="loading">Henter...</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- PIN MODAL TIL ALARM -->
+<div class="modal-overlay" id="pinModal">
+  <div class="modal">
+    <h3 id="pinTitle">Alarm PIN</h3>
+    <div class="pin-display" id="pinDisplay">____</div>
+    <div class="pin-grid">
+      <button class="pin-btn" onclick="pinKey('1')">1</button>
+      <button class="pin-btn" onclick="pinKey('2')">2</button>
+      <button class="pin-btn" onclick="pinKey('3')">3</button>
+      <button class="pin-btn" onclick="pinKey('4')">4</button>
+      <button class="pin-btn" onclick="pinKey('5')">5</button>
+      <button class="pin-btn" onclick="pinKey('6')">6</button>
+      <button class="pin-btn" onclick="pinKey('7')">7</button>
+      <button class="pin-btn" onclick="pinKey('8')">8</button>
+      <button class="pin-btn" onclick="pinKey('9')">9</button>
+      <button class="pin-btn" onclick="pinKey('⌫')" style="color:var(--red)">⌫</button>
+      <button class="pin-btn" onclick="pinKey('0')">0</button>
+      <button class="pin-btn" onclick="pinKey('✓')" style="color:var(--green)">✓</button>
+    </div>
+    <button class="pin-cancel" onclick="closePin()">Annuller</button>
+  </div>
+</div>
+
+<script>
+const HA = 'http://5.186.61.21:8123';
+const TOKEN = ''; // Sættes ved load via query-param eller prompt
+let _token = '';
+let _pinAction = null, _pinCode = '';
+
+// ── Hent token fra localStorage eller prompt
+function getToken() {
+  _token = localStorage.getItem('ha_token') || '';
+  if (!_token) {
+    _token = prompt('Indtast Home Assistant Long-Lived Token:') || '';
+    if (_token) localStorage.setItem('ha_token', _token);
+  }
+  return _token;
+}
+
+async function haGet(path) {
+  const r = await fetch(HA + path, { headers: { Authorization: 'Bearer ' + _token } });
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+async function haPost(path, body={}) {
+  const r = await fetch(HA + path, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + _token, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+// ── CLOCK
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('da-DK', { hour:'2-digit', minute:'2-digit' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── GARAGEPORTE
+const GARAGE = [
+  { id: 'cover.tesla_local',  name: 'Port 1 (Tesla)' },
+  { id: 'cover.ford_status',  name: 'Port 2 (Ford)' }
+];
+
+async function loadGarage() {
+  const grid = document.getElementById('garageGrid');
+  try {
+    const states = await Promise.all(GARAGE.map(g => haGet('/api/states/' + g.id)));
+    grid.innerHTML = '';
+    states.forEach((s, i) => {
+      const isOpen = s.state === 'open';
+      const div = document.createElement('div');
+      div.className = 'garage-port ' + (isOpen ? 'open' : 'closed');
+      div.innerHTML = `
+        <div class="garage-icon">${isOpen ? '🔓' : '🔒'}</div>
+        <div class="garage-name">${GARAGE[i].name}</div>
+        <div class="garage-state">${isOpen ? 'ÅBEN' : 'LUKKET'}</div>
+        <button class="garage-btn" onclick="toggleGarage('${GARAGE[i].id}','${s.state}')">
+          ${isOpen ? '⬇️ Luk' : '⬆️ Åbn'}
+        </button>`;
+      grid.appendChild(div);
+    });
+  } catch(e) {
+    grid.innerHTML = '<div class="error-msg">Fejl: ' + e.message + '</div>';
+  }
+}
+
+async function toggleGarage(entityId, currentState) {
+  const action = currentState === 'open' ? 'close_cover' : 'open_cover';
+  await haPost('/api/services/cover/' + action, { entity_id: entityId });
+  setTimeout(loadGarage, 1200);
+}
+
+// ── ALARM
+const ALARMS = [
+  { id: 'alarm_control_panel.verisure_alarm', name: 'Verisure' },
+  { id: 'alarm_control_panel.nvr_alarm_manager', name: 'NVR' }
+];
+
+function alarmLabel(state) {
+  const map = { disarmed:'Deaktiveret', armed_home:'Hjemme', armed_away:'Væk', armed_night:'Nat', pending:'Afventer', triggered:'UDLØST' };
+  return map[state] || state;
+}
+function alarmDotClass(state) {
+  if (state === 'disarmed') return '';
+  if (state === 'triggered' || state === 'pending') return 'pending';
+  return 'armed';
+}
+
+async function loadAlarm() {
+  const sec = document.getElementById('alarmSection');
+  try {
+    const states = await Promise.all(ALARMS.map(a => haGet('/api/states/' + a.id)));
+    sec.innerHTML = states.map((s, i) => `
+      <div style="margin-bottom:${i<states.length-1?'14px':'0'}">
+        <div class="alarm-display">
+          <div class="alarm-state">
+            <div class="alarm-dot ${alarmDotClass(s.state)}"></div>
+            <div>
+              <div class="alarm-name">${ALARMS[i].name}</div>
+              <div class="alarm-status">${alarmLabel(s.state)}</div>
+            </div>
+          </div>
+        </div>
+        <div class="alarm-btns">
+          <button class="alarm-btn disarm" onclick="alarmAction('${ALARMS[i].id}','disarm')">🔓 Deaktiver</button>
+          <button class="alarm-btn arm-home" onclick="alarmAction('${ALARMS[i].id}','arm_home')">🏠 Hjemme</button>
+          <button class="alarm-btn arm-away" onclick="alarmAction('${ALARMS[i].id}','arm_away')">🔒 Væk</button>
+        </div>
+      </div>`).join('<hr style="border:none;border-top:1px solid var(--border);margin:12px 0">');
+  } catch(e) {
+    sec.innerHTML = '<div class="error-msg">Fejl: ' + e.message + '</div>';
+  }
+}
+
+async function alarmAction(entityId, action) {
+  if (action !== 'disarm') {
+    await haPost('/api/services/alarm_control_panel/' + action, { entity_id: entityId });
+  } else {
+    // Disarm — åbn PIN
+    _pinAction = { entityId, action };
+    _pinCode = '';
+    document.getElementById('pinTitle').textContent = 'Indtast PIN for at deaktivere';
+    document.getElementById('pinDisplay').textContent = '____';
+    document.getElementById('pinModal').classList.add('show');
+    return;
+  }
+  setTimeout(loadAlarm, 1500);
+}
+
+// PIN modal
+function pinKey(k) {
+  if (k === '⌫') { _pinCode = _pinCode.slice(0,-1); }
+  else if (k === '✓') { submitPin(); return; }
+  else if (_pinCode.length < 6) { _pinCode += k; }
+  const display = _pinCode.padEnd(4,'_').substring(0,Math.max(4,_pinCode.length));
+  document.getElementById('pinDisplay').textContent = '•'.repeat(_pinCode.length) || '____';
+}
+function closePin() {
+  document.getElementById('pinModal').classList.remove('show');
+  _pinAction = null; _pinCode = '';
+}
+async function submitPin() {
+  if (!_pinAction || _pinCode.length < 4) return;
+  try {
+    await haPost('/api/services/alarm_control_panel/' + _pinAction.action, {
+      entity_id: _pinAction.entityId,
+      code: _pinCode
+    });
+    closePin();
+    setTimeout(loadAlarm, 1500);
+  } catch(e) {
+    document.getElementById('pinDisplay').textContent = '❌ Fejl';
+    setTimeout(() => { _pinCode=''; document.getElementById('pinDisplay').textContent='____'; }, 1500);
+  }
+}
+
+// ── TEMPERATURER
+const TEMPS = [
+  { id: 'sensor.stue_temperatur',               name: 'Stue' },
+  { id: 'sensor.kokken_temperature',             name: 'Køkken' },
+  { id: 'sensor.1_sal_temperatur',               name: '1. sal' },
+  { id: 'sensor.bryggers_temperatur',            name: 'Bryggers' },
+  { id: 'sensor.handholdt_sovevaerelse_temperature', name: 'Soveværelse' },
+  { id: 'sensor.toiletvogn_temperature',         name: 'Vinkælder' },
+];
+
+async function loadTemps() {
+  const grid = document.getElementById('tempGrid');
+  try {
+    const states = await Promise.all(TEMPS.map(t => haGet('/api/states/' + t.id)));
+    grid.innerHTML = states.map((s, i) => {
+      const val = parseFloat(s.state);
+      const color = val > 26 ? 'var(--red)' : val > 22 ? 'var(--yellow)' : 'var(--accent)';
+      return `<div class="temp-item">
+        <div class="temp-val" style="color:${color}">${isNaN(val)?'—':val.toFixed(1)}°</div>
+        <div class="temp-name">${TEMPS[i].name}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    grid.innerHTML = '<div class="error-msg">Fejl</div>';
+  }
+}
+
+// ── LYS
+const LIGHTS_INDOOR = [
+  { id: 'light.g_stue',                 name: 'Stue', icon: '🛋️' },
+  { id: 'light.kokken_6791006',         name: 'Køkken', icon: '🍳' },
+  { id: 'light.kokken_6598493',         name: 'Spisebord', icon: '🍽️' },
+  { id: 'light.loft_sovevaerelse',      name: 'Soveværelse loft', icon: '🛏️' },
+  { id: 'light.gang_1_sal_5699934',     name: 'Gang 1. sal', icon: '🚶' },
+  { id: 'light.entre_ved_badevaerelse_6449757', name: 'Entre — bad', icon: '🚿' },
+  { id: 'light.klinikken',             name: 'Klinikken', icon: '🏥' },
+];
+const LIGHTS_OUTDOOR = [
+  { id: 'light.g_indkorsel',   name: 'Indkørsel', icon: '🚗' },
+  { id: 'light.g_entre',       name: 'Entre', icon: '🚪' },
+  { id: 'light.lage_h',        name: 'Låge H', icon: '🌿' },
+  { id: 'light.lage_v',        name: 'Låge V', icon: '🌿' },
+  { id: 'light.ude_1',         name: 'Ude 1', icon: '💡' },
+  { id: 'light.ude_2',         name: 'Ude 2', icon: '💡' },
+  { id: 'light.ude_3',         name: 'Ude 3', icon: '💡' },
+];
+
+async function loadLights(ids, containerId) {
+  const container = document.getElementById(containerId);
+  try {
+    const states = await Promise.all(ids.map(l => haGet('/api/states/' + l.id)));
+    container.innerHTML = states.map((s, i) => {
+      const isOn = s.state === 'on';
+      return `<div class="light-row">
+        <span class="light-icon">${ids[i].icon}</span>
+        <span class="light-name">${ids[i].name}</span>
+        <button class="toggle-btn ${isOn?'on':''}" onclick="toggleLight('${ids[i].id}','${s.state}')" title="${isOn?'Sluk':'Tænd'}"></button>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '<div class="error-msg">Fejl</div>';
+  }
+}
+
+async function toggleLight(entityId, currentState) {
+  const action = currentState === 'on' ? 'turn_off' : 'turn_on';
+  await haPost('/api/services/light/' + action, { entity_id: entityId });
+  setTimeout(() => {
+    const isIndoor = LIGHTS_INDOOR.some(l => l.id === entityId);
+    loadLights(isIndoor ? LIGHTS_INDOOR : LIGHTS_OUTDOOR, isIndoor ? 'lightsIndoor' : 'lightsOutdoor');
+  }, 800);
+}
+
+// ── AFFALDSKALENDER
+const AFFALD = [
+  { id: 'sensor.affalddk_katrinedal_3_rest_madaffald',                           name: 'Rest- & madaffald' },
+  { id: 'sensor.affalddk_katrinedal_3_papir_pap_glas',                           name: 'Papir, Pap & Glas' },
+  { id: 'sensor.affalddk_katrinedal_3_plast_metal_mad_drikkekartoner',           name: 'Plast & Metal' },
+  { id: 'sensor.affalddk_katrinedal_3_naeste_afhentning',                        name: 'Næste afhentning' },
+];
+
+async function loadAffald() {
+  const list = document.getElementById('affaldList');
+  try {
+    const states = await Promise.all(AFFALD.map(a => haGet('/api/states/' + a.id)));
+    list.innerHTML = states.map((s, i) => {
+      const days = parseInt(s.state);
+      const cls = days <= 1 ? 'urgent' : days <= 3 ? 'soon' : '';
+      const label = isNaN(days) ? s.state : (days === 0 ? 'I dag! 🚨' : days === 1 ? 'I morgen ⚠️' : `Om ${days} dage`);
+      return `<div class="affald-row">
+        <span class="affald-name">${AFFALD[i].name}</span>
+        <span class="affald-days ${cls}">${label}</span>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="error-msg">Fejl</div>';
+  }
+}
+
+// ── KAMERAER BEVÆGELSE
+const CAMS = [
+  { id: 'binary_sensor.ai_pro_motion',    name: 'Garageporte' },
+  { id: 'binary_sensor.ai_pro_motion_2',  name: 'Indkørsel' },
+  { id: 'binary_sensor.cam_forhaven_person_detected',  name: 'Forhave — person' },
+  { id: 'binary_sensor.cam_hoveddore_person_detected', name: 'Hoveddør — person' },
+  { id: 'binary_sensor.cam_garageporte_person_detected', name: 'Garag. — person' },
+  { id: 'binary_sensor.cam_indkorsel_person_detected', name: 'Indkørsel — person' },
+];
+
+async function loadCams() {
+  const grid = document.getElementById('camGrid');
+  try {
+    const states = await Promise.all(CAMS.map(c => haGet('/api/states/' + c.id)));
+    grid.innerHTML = states.map((s, i) => {
+      const active = s.state === 'on';
+      return `<div class="cam-item">
+        <div class="cam-dot ${active?'motion':''}"></div>
+        <span class="cam-name">${CAMS[i].name}</span>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    grid.innerHTML = '<div class="error-msg">Fejl</div>';
+  }
+}
+
+// ── LOAD ALL
+async function loadAll() {
+  document.getElementById('lastUpdate').textContent = 'Opdaterer...';
+  await Promise.all([
+    loadGarage(),
+    loadAlarm(),
+    loadTemps(),
+    loadLights(LIGHTS_INDOOR, 'lightsIndoor'),
+    loadLights(LIGHTS_OUTDOOR, 'lightsOutdoor'),
+    loadAffald(),
+    loadCams(),
+  ]);
+  document.getElementById('lastUpdate').textContent =
+    'Sidst opdateret: ' + new Date().toLocaleTimeString('da-DK');
+}
+
+// ── INIT
+getToken();
+loadAll();
+setInterval(loadAll, 30000); // Auto-opdater hvert 30 sek
+</script>
+</body>
+</html>
